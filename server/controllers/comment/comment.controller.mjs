@@ -50,6 +50,8 @@ export const commentController = async (request, response) => {
       (commentingUser) => userName === commentingUser.userName
     );
 
+    // !TODO: Use Google Perspective API. (For Comment Filtration)
+
     if (foundCommentingUser) {
       await CommentModel.findOneAndUpdate(
         { _id: { $eq: new mongoose.Types.ObjectId(postId) } },
