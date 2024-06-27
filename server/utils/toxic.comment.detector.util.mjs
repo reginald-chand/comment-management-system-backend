@@ -1,5 +1,5 @@
-import { logger } from "../configs/logger.config.mjs";
 import Perspective from "perspective-api-client";
+import { logger } from "../configs/logger.config.mjs";
 
 const perspective = new Perspective({
   apiKey: process.env.PERSPECTIVE_API_KEY,
@@ -19,7 +19,6 @@ export const toxicCommentDetectorUtil = async (comment) => {
   try {
     const result = await perspective.analyze(comment, {
       attributes: ["toxicity", "spam"],
-      languages: ["en"],
     });
 
     const { TOXICITY, SPAM } = result.attributeScores;
