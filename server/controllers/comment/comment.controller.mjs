@@ -2,6 +2,7 @@ import { CommentModel } from "../../models/comment/comment.model.mjs";
 import { commentControllerValidator } from "../../validators/comment/comment.controller.validator.mjs";
 import { logger } from "../../configs/logger.config.mjs";
 import mongoose from "mongoose";
+import { toxicCommentDetectorUtil } from "../../utils/toxic.comment.detector.util.mjs";
 
 export const commentController = async (request, response) => {
   const { error, value } = commentControllerValidator.validate(request.body);
@@ -50,8 +51,6 @@ export const commentController = async (request, response) => {
       (commentingUser) => userName === commentingUser.userName
     );
 
-    // !TODO: Use Google Perspective API. (For Comment Filtration)
-
     if (foundCommentingUser) {
       await CommentModel.findOneAndUpdate(
         { _id: { $eq: new mongoose.Types.ObjectId(postId) } },
@@ -65,6 +64,16 @@ export const commentController = async (request, response) => {
       return response.status(200).json({
         responseMessage: "Your comment has been successfully deleted.",
       });
+    }
+
+    const userCommentIsFlaggedToxicOrSpam = await toxicCommentDetectorUtil(
+      userComment
+    );
+
+    if (userCommentIsFlaggedToxicOrSpam) {
+      return response
+        .status(400)
+        .json({ responseMessage: userCommentIsFlaggedToxicOrSpam });
     }
 
     await CommentModel.findOneAndUpdate(
