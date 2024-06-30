@@ -2,6 +2,7 @@ import { CommentModel } from "../../models/comment/comment.model.mjs";
 import { commentControllerValidator } from "../../validators/comment/comment.controller.validator.mjs";
 import { logger } from "../../configs/logger.config.mjs";
 import mongoose from "mongoose";
+import { redisClient } from "../../configs/redis.client.config.mjs";
 import { toxicCommentDetectorUtil } from "../../utils/toxic.comment.detector.util.mjs";
 
 export const commentController = async (request, response) => {
@@ -11,9 +12,15 @@ export const commentController = async (request, response) => {
     return response.status(400).json({ responseMessage: error.message });
   }
 
-  const { userName, userComment, postId } = value;
+  const { userName, userComment, postId, csrfToken, userData } = value;
 
   try {
+    const userSession = await redisClient.hGetAll(userData.email);
+
+    if (csrfToken !== userSession.csrfToken) {
+      return response.status(401).json({ responseMessage: "UnAuthorized." });
+    }
+
     const database = mongoose.connection.db;
 
     const existingUser = await database
